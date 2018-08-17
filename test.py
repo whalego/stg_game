@@ -4,21 +4,14 @@ import pygame
 from pygame.locals import *
 import sys
 import math
-import time
 
-#SCR_WIDTH, SCR_HEIGHT = 320, 160
-#screen = pygame.display.set_mode((SCR_WIDTH, SCR_HEIGHT))
 
 SCR_RECT = Rect(0, 0, 320, 160)
 
 pygame.display.set_caption(u"Window")
 
-#jikiImg, jikiRect = load_pict("./pict/jiki.png", transparent_color=-1)
-
 jiki_cur_Position = (0, 0)
 jiki_Position = []
-
-"""vx = vy = 1.5"""
 
 
 START = (300, 40)
@@ -39,6 +32,16 @@ def main():
     Shot.image = load_image("./pict/shot.png")
     Shot.containers = jiki
     clock = pygame.time.Clock()
+
+    enemy = pygame.sprite.RenderUpdates()
+    Alien.containers = enemy
+    Alien.images = split_image(load_image("./pict/alien.png"), 2)
+
+    for i in range(0, 10):
+        x = 20 + (i % 10) * 20
+        y = 20 + (i / 10) * 20
+
+        Alien((x, y))
 
     Player()
 
@@ -111,6 +114,7 @@ def mouse_handler():
         Fireball(START, (x, y))
 """
 
+
 def load_image(filename, colorkey=None):
     try:
         image = pygame.image.load(filename)
@@ -146,6 +150,20 @@ class Fireball(pygame.sprite.Sprite):
 
         if not SCR_RECT.contains(self.rect):
             self.kill()
+
+
+def split_image(image):
+
+    imageList = []
+
+    for i in range(0, 60, 30):
+        surface = pygame.Surface((30, 30))
+        surface.blit(image, (0, 0),)
+        surface.set_colorkey(surface.get_at((0, 0)), RLEACCEL)
+        surface.convert()
+        imageList.append(surface)
+
+    return imageList
 
 
 class Player(pygame.sprite.Sprite):
@@ -212,7 +230,7 @@ class Alien(pygame.sprite.Sprite):
         self.rect.move_ip(self.speed, 0)
         if self.rect.center[0] < self.left or self.rect.center[0] > self.right:
             self.speed = - self.speed
-        self.frame+= 1
+        self.frame += 1
         self.image = self.images[self.frame/self.animcycle % 2]
 
 
