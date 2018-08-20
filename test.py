@@ -4,6 +4,7 @@ import pygame
 from pygame.locals import *
 import sys
 import math
+import random
 
 
 SCR_RECT = Rect(0, 0, 320, 160)
@@ -26,24 +27,31 @@ def main():
     Fireball.containers = tama
     Fireball.image = load_image("./pict/fireball.png", colorkey=-1)
 
-    jiki = pygame.sprite.RenderUpdates()
-    Player.containers = jiki
+    all = pygame.sprite.RenderUpdates()
+    player = pygame.sprite.Group()
+    pshots = pygame.sprite.Group()
+    enemy = pygame.sprite.Group()
+    eshots = pygame.sprite.Group()
+
+    Player.containers = all, player
+    Shot.containers = all, pshots
+    EnemyShot.containers = all, eshots
+    Alien.containers = all, enemy
+
     Player.image = load_image("./pict/jiki.png", -1)
-    Shot.image = load_image("./pict/shot.png")
-    Shot.containers = jiki
-    clock = pygame.time.Clock()
+    Shot.image = load_image("./pict/Pshot.png")
+    EnemyShot.image = load_image("./pict/Eshot.png")
+    Alien.images = split_image(load_image("./pict/alien.png", colorkey=-1))
 
-    enemy = pygame.sprite.RenderUpdates()
-    Alien.containers = enemy
-    Alien.images = split_image(load_image("./pict/alien.png"), 2)
+    Player()
 
-    for i in range(0, 10):
-        x = 20 + (i % 10) * 20
-        y = 20 + (i / 10) * 20
+    for i in range(0, 11):
+        x = 15 + (i % 5) * 20
+        y = 15 + (i // 5) * 20
 
         Alien((x, y))
 
-    Player()
+    clock = pygame.time.Clock()
 
     while True:
         clock.tick(60)
@@ -51,50 +59,12 @@ def main():
 
         pygame.draw.circle(screen, (255, 100, 100), (150, 120), 5)
 
-        """自機の移動
-        jikiRect.move_ip(vx, vy)
-        if jikiRect.left < 5 or jikiRect.right > 160:
-            vx = -vx
-        if jikiRect.top < 5 or jikiRect.bottom > 155:
-            vy = -vy
-        
+        all.update()
+        all.draw(screen)
 
-        pressed_keys = pygame.key.get_pressed()
+        collision_detection(player, pshots, enemy, eshots)
+        #collision_detection(eshots, player)
 
-        if pressed_keys[K_LEFT]:
-            jikiRect.move_ip(-vx, 0)
-        if pressed_keys[K_RIGHT]:
-            jikiRect.move_ip(vx, 0)
-        if pressed_keys[K_UP]:
-            jikiRect.move_ip(0, -vy)
-        if pressed_keys[K_DOWN]:
-            jikiRect.move_ip(0, vy)
-
-        mouse_pressed = pygame.mouse.get_pressed()
-        if mouse_pressed[0]:
-            x, y = pygame.mouse.get_pos()
-            x -= jikiImg.get_width() / 2
-            y -= jikiImg.get_height() / 2
-            jiki_Position.append((x, y))
-
-        x, y = pygame.mouse.get_pos()
-        x -= jikiImg.get_width() / 2
-        y -= jikiImg.get_height() / 2
-        jiki_cur_Position = x, y
-        
-        for i, j in jiki_Position:
-            screen.blit(jikiImg, (i, j))
-
-        screen.blit(jikiImg, jikiRect)
-        """
-
-        #mouse_handler()
-
-        tama.update()
-        tama.draw(screen)
-
-        jiki.update()
-        jiki.draw(screen)
 
         pygame.display.update()
 
@@ -104,15 +74,6 @@ def main():
             if event.type == KEYDOWN and event.key == K_ESCAPE:
                 pygame.quit()
                 sys.exit()
-
-"""
-
-def mouse_handler():
-    mouse_pressed = pygame.mouse.get_pressed()
-    if mouse_pressed[0]:
-        x, y = pygame.mouse.get_pos()
-        Fireball(START, (x, y))
-"""
 
 
 def load_image(filename, colorkey=None):
@@ -158,7 +119,7 @@ def split_image(image):
 
     for i in range(0, 60, 30):
         surface = pygame.Surface((30, 30))
-        surface.blit(image, (0, 0),)
+        surface.blit(image, (0, 0), (i, 0, 30, 30))
         surface.set_colorkey(surface.get_at((0, 0)), RLEACCEL)
         surface.convert()
         imageList.append(surface)
@@ -200,38 +161,65 @@ class Player(pygame.sprite.Sprite):
 
 
 class Shot(pygame.sprite.Sprite):
-        speed = 9
+    speed = 9
 
-        def __init__(self, pos):
-            pygame.sprite.Sprite.__init__(self, self.containers)
-            self.rect = self.image.get_rect()
-            self.rect.center = pos
+    def __init__(self, pos):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+        self.rect = self.image.get_rect()
+        self.rect.center = pos
 
-        def update(self):
-            self.rect.move_ip(0, - self.speed)
-            if self.rect.top < 0:
-                self.kill()
+    def update(self):
+        self.rect.move_ip(0, - self.speed)
+        if self.rect.top < 0:
+            self.kill()
+
+
+class EnemyShot(Shot):
+    def __init__(self, speed):
+        super().__init__(speed)
+        self.speed = - 5
+        pygame.sprite.Sprite.__init__(self, self.containers)
 
 
 class Alien(pygame.sprite.Sprite):
-    speed = 2
-    animcycle = 18
+    speed = 1
+    animcycle = 36
     frame = 0
-    move_width = 230
+    move_width = 100
+    prob_shots = 0.001
 
-    def __init__(self,pos):
+    def __init__(self, pos):
         pygame.sprite.Sprite.__init__(self, self.containers)
         self.image = self.images[0]
         self.rect = self.image.get_rect()
         self.rect.center = pos
         self.left = pos[0]
         self.right = self.left + self.move_width
+
     def update(self):
         self.rect.move_ip(self.speed, 0)
+
         if self.rect.center[0] < self.left or self.rect.center[0] > self.right:
-            self.speed = - self.speed
+            self.speed = -self.speed
+
+        if random.random() < self.prob_shots:
+            EnemyShot(self.rect.center)
+
         self.frame += 1
-        self.image = self.images[self.frame/self.animcycle % 2]
+        self.image = self.images[self.frame // self.animcycle % 2]
+        #/のみはPython2の書き方、3は//で整数になる
+
+
+def collision_detection(player, Pshots, aliens, Eshots):
+
+    alien_collided = pygame.sprite.groupcollide(aliens, Pshots, True, True)
+
+    for alien in alien_collided.keys():
+        print(alien)
+
+    player_collided = pygame.sprite.groupcollide(player, Eshots, True, True)
+    if player_collided:
+        print(player)
 
 
 if __name__ == "__main__":
