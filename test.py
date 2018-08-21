@@ -37,11 +37,13 @@ def main():
     Shot.containers = all, pshots
     EnemyShot.containers = all, eshots
     Alien.containers = all, enemy
+    Explosion.containers = all
 
     Player.image = load_image("./pict/jiki.png", -1)
     Shot.image = load_image("./pict/Pshot.png")
     EnemyShot.image = load_image("./pict/Eshot.png")
-    Alien.images = split_image(load_image("./pict/alien.png", colorkey=-1))
+    Alien.images = split_image(load_image("./pict/enemy.png", colorkey=-1), 2)
+    Explosion.images = split_image(load_image("./pict/bomb.png", colorkey=-1), 5)
 
     Player()
 
@@ -91,6 +93,25 @@ def load_image(filename, colorkey=None):
     return image
 
 
+class Explosion(pygame.sprite.Sprite):
+
+    animcycle = 2
+    frame = 0
+
+    def __init__(self, pos):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+        self.image = self.images[0]
+        self.rect = self.image.get_rect()
+        self.rect.center = pos
+        self.max_frame = len(self.images) * self.animcycle
+
+    def update(self):
+        self.image = self.images[self.frame // self.animcycle]
+        self.frame += 1
+        if self.frame == self.max_frame:
+            self.kill()
+
+
 class Fireball(pygame.sprite.Sprite):
     speed = 10
 
@@ -113,13 +134,16 @@ class Fireball(pygame.sprite.Sprite):
             self.kill()
 
 
-def split_image(image):
+def split_image(image, n):
 
     imageList = []
+    w = image.get_width()
+    h = image.get_height()
+    wl = w / n
 
-    for i in range(0, 60, 30):
-        surface = pygame.Surface((30, 30))
-        surface.blit(image, (0, 0), (i, 0, 30, 30))
+    for i in range(0, w, h):
+        surface = pygame.Surface((wl, h))
+        surface.blit(image, (0, 0), (i, 0, wl, h))
         surface.set_colorkey(surface.get_at((0, 0)), RLEACCEL)
         surface.convert()
         imageList.append(surface)
@@ -177,8 +201,8 @@ class Shot(pygame.sprite.Sprite):
 class EnemyShot(Shot):
     def __init__(self, speed):
         super().__init__(speed)
-        self.speed = - 5
-        pygame.sprite.Sprite.__init__(self, self.containers)
+        self.speed = - 3
+        #pygame.sprite.Sprite.__init__(self, self.containers)
 
 
 class Alien(pygame.sprite.Sprite):
@@ -186,7 +210,7 @@ class Alien(pygame.sprite.Sprite):
     animcycle = 36
     frame = 0
     move_width = 100
-    prob_shots = 0.001
+    prob_shots = 0.004
 
     def __init__(self, pos):
         pygame.sprite.Sprite.__init__(self, self.containers)
@@ -216,10 +240,17 @@ def collision_detection(player, Pshots, aliens, Eshots):
 
     for alien in alien_collided.keys():
         print(alien)
+        Explosion(alien.rect.center)
 
     player_collided = pygame.sprite.groupcollide(player, Eshots, True, True)
     if player_collided:
         print(player)
+
+
+    Eshots_collided = pygame.sprite.groupcollide(Eshots, Pshots, True, True)
+    if Eshots_collided:
+        for exp in Eshots_collided.keys():
+            Explosion(exp.rect.center)
 
 
 if __name__ == "__main__":
