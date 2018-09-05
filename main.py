@@ -3,7 +3,7 @@
 import pygame
 from pygame.locals import *
 import sys
-
+import os
 import random
 
 START, PLAY, GAMEOVER = (0, 1, 2)
@@ -68,7 +68,7 @@ class Invader:
 
             enemy_image = Enemy.images[0]
             screen.blit(enemy_image, ((SCR_RECT.width-enemy_image.get_width()) // 2, 100))
-
+            #font
             push_font = pygame.font.SysFont(None, 80)
             push_space = push_font.reder("PUSH SPACE KEY", False, (255, 125, 125))
             screen.blit = (push_space, ((SCR_RECT.width - push_space.get_width()) // 2, 150))
@@ -268,5 +268,5 @@ class Explosion(pygame.sprite.Sprite):
             self.kill()
 
 
-if __name__ == "__maine__":
+if __name__ == "__main__":
     Invader()
