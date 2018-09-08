@@ -7,7 +7,7 @@ import os
 import random
 
 START, PLAY, GAMEOVER = (0, 1, 2)
-SCR_RECT = Rect(0, 0, 320, 240)
+SCR_RECT = Rect(0, 0, 640, 480)
 
 
 class Invader:
@@ -43,7 +43,7 @@ class Invader:
         EShot.containers = self.all, self.Eshots
         Explosion.containers = self.all
 
-        #Player()
+        self.Player = Player()
 
         for i in range(0, 11):
             x = 15 + (i % 5) * 20
@@ -67,15 +67,15 @@ class Invader:
             screen.blit(title, ((SCR_RECT.width - title.get_width()) // 2, 50))
 
             enemy_image = Enemy.images[0]
-            screen.blit(enemy_image, ((SCR_RECT.width-enemy_image.get_width()) // 2, 100))
-            #font
+            screen.blit(enemy_image, ((SCR_RECT.width - enemy_image.get_width()) // 2, 100))
+
             push_font = pygame.font.SysFont(None, 80)
-            push_space = push_font.reder("PUSH SPACE KEY", False, (255, 125, 125))
-            screen.blit = (push_space, ((SCR_RECT.width - push_space.get_width()) // 2, 150))
+            push_space = push_font.render("PUSH SPACE KEY", False, (255, 125, 125))
+            screen.blit(push_space, ((SCR_RECT.width - push_space.get_width()) // 2, 150))
 
             credit_font = pygame.font.SysFont(None, 80)
-            credit_space = credit_font.reder("くれじっと", False, (255, 125, 125))
-            screen.blit = (credit_space, ((SCR_RECT.width - credit_space.get_width()) // 2, 150))
+            credit_space = credit_font.render("credit", False, (255, 125, 125))
+            screen.blit(credit_space, ((SCR_RECT.width - credit_space.get_width()) // 2, 300))
 
         elif self.game_state == PLAY:
             self.all.draw(screen)
@@ -111,7 +111,7 @@ class Invader:
                     self.game_state = PLAY
 
     def collision_detection(self):
-        enemy_collided = pygame.sprite.groupcollide(self.enemy, self.shots, True, True)
+        enemy_collided = pygame.sprite.groupcollide(self.enemy, self.Pshots, True, True)
         for enemy in enemy_collided.keys():
             Explosion(enemy.rect.center)
 
@@ -141,6 +141,7 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         #imageとcontainersはメインでセットする。
         pygame.sprite.Sprite.__init__(self, self.containers)
+
         self.rect = self.image.get_rect()
         self.rect.bottom = SCR_RECT.bottom
         self.reload_timer = 0
@@ -192,7 +193,7 @@ class Enemy(pygame.sprite.Sprite):
     speed = 1
     animcycle = 36
     frame = 0
-    move_width = 100
+    move_width = 580
     prob_shots = 0.004
 
     def __init__(self, pos):
